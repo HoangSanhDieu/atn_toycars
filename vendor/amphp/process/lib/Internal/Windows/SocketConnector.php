@@ -366,7 +366,10 @@ final class SocketConnector
 
         $handle->joinDeferred->fail($error);
 
-        Loop::cancel($handle->childPidWatcher);
+        if ($handle->childPidWatcher !== null) {
+            Loop::cancel($handle->childPidWatcher);
+        }
+
         $handle->pidDeferred->fail($error);
     }
 

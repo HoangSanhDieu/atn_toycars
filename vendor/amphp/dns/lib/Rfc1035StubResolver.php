@@ -58,7 +58,7 @@ final class Rfc1035StubResolver implements Resolver
     /** @var int */
     private $nextNameserver = 0;
 
-    public function __construct(Cache $cache = null, ConfigLoader $configLoader = null)
+    public function __construct(?Cache $cache = null, ?ConfigLoader $configLoader = null)
     {
         $this->cache = $cache ?? new ArrayCache(5000 /* default gc interval */, 256 /* size */);
         $this->configLoader = $configLoader ?? (\stripos(PHP_OS, "win") === 0
@@ -93,7 +93,7 @@ final class Rfc1035StubResolver implements Resolver
     }
 
     /** @inheritdoc */
-    public function resolve(string $name, int $typeRestriction = null): Promise
+    public function resolve(string $name, ?int $typeRestriction = null): Promise
     {
         if ($typeRestriction !== null && $typeRestriction !== Record::A && $typeRestriction !== Record::AAAA) {
             throw new \Error("Invalid value for parameter 2: null|Record::A|Record::AAAA expected");
@@ -187,7 +187,11 @@ final class Rfc1035StubResolver implements Resolver
                                     throw $reason;
                                 }
 
-                                if ($searchIndex < \count($searchList) - 1 && \in_array($reason->getCode(), [2, 3], true)) {
+                                if ($searchIndex < \count($searchList) - 1 && \in_array(
+                                    $reason->getCode(),
+                                    [2, 3],
+                                    true
+                                )) {
                                     continue 2;
                                 }
 
@@ -246,15 +250,19 @@ final class Rfc1035StubResolver implements Resolver
             } catch (ConfigException $e) {
                 $this->configStatus = self::CONFIG_FAILED;
 
+                $message = "Could not load the system's DNS configuration; "
+                    . "falling back to synchronous, blocking resolver; "
+                    . \get_class($e) . ": " . $e->getMessage();
+
                 try {
                     \trigger_error(
-                        "Could not load the system's DNS configuration, using synchronous, blocking fallback",
+                        $message,
                         \E_USER_WARNING
                     );
                 } catch (\Throwable $triggerException) {
                     \set_error_handler(null);
                     \trigger_error(
-                        "Could not load the system's DNS configuration, using synchronous, blocking fallback",
+                        $message,
                         \E_USER_WARNING
                     );
                     \restore_error_handler();
@@ -406,7 +414,7 @@ final class Rfc1035StubResolver implements Resolver
         return $promise;
     }
 
-    private function queryHosts(string $name, int $typeRestriction = null): array
+    private function queryHosts(string $name, ?int $typeRestriction = null): array
     {
         $hosts = $this->config->getKnownHosts();
         $records = [];

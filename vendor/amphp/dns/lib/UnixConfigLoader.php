@@ -29,7 +29,7 @@ class UnixConfigLoader implements ConfigLoader
     private $path;
     private $hostLoader;
 
-    public function __construct(string $path = "/etc/resolv.conf", HostLoader $hostLoader = null)
+    public function __construct(string $path = "/etc/resolv.conf", ?HostLoader $hostLoader = null)
     {
         $this->path = $path;
         $this->hostLoader = $hostLoader ?? new HostLoader;
@@ -117,10 +117,10 @@ class UnixConfigLoader implements ConfigLoader
 
             if (\count($searchList) === 0) {
                 $hostname = \gethostname();
-                $dot = \strpos(".", $hostname);
+                $dot = \strpos($hostname, ".");
                 if ($dot !== false && $dot < \strlen($hostname)) {
                     $searchList = [
-                        \substr($hostname, $dot),
+                        \substr($hostname, $dot + 1),
                     ];
                 }
             }
